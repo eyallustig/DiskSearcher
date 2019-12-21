@@ -7,8 +7,12 @@ public class SynchronizedQueue<T> {
 
 	private T[] buffer;
 	private int producers;
-	// TODO: Add more private members here as necessary
-	
+	private final Object lock = new Object();
+	private int capacity;
+	private int size;
+	private int first;
+	private int last;
+
 	/**
 	 * Constructor. Allocates a buffer (an array) with the given capacity and
 	 * resets pointers and counters.
@@ -18,9 +22,12 @@ public class SynchronizedQueue<T> {
 	public SynchronizedQueue(int capacity) {
 		this.buffer = (T[])(new Object[capacity]);
 		this.producers = 0;
-		// TODO: Add more logic here as necessary
+		this.capacity = capacity;
+		this.size = 0;
+		this.first = 0;
+		this.last = 0;
 	}
-	
+
 	/**
 	 * Dequeues the first item from the queue and returns it.
 	 * If the queue is empty but producers are still registered to this queue, 
@@ -33,7 +40,24 @@ public class SynchronizedQueue<T> {
 	 * @see #unregisterProducer()
 	 */
 	public T dequeue() {
-
+		synchronized (lock) {
+			while (size == 0 && producers > 0) {
+				try {
+					lock.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			if (size == 0 && producers == 0) {
+				return null;
+			}
+			T firstItem = buffer[first % capacity];
+			first++;
+			size--;
+			// notify waiting threads that space becomes available
+			lock.notify();
+			return firstItem;
+		}
 	}
 
 	/**
@@ -43,7 +67,20 @@ public class SynchronizedQueue<T> {
 	 * @param item Item to enqueue
 	 */
 	public void enqueue(T item) {
-
+		synchronized (lock) {
+			while (size == capacity) {
+				try {
+					lock.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			buffer[last % capacity] = item;
+			size++;
+			last++;
+			// notify waiting threads some item is available
+			lock.notify();
+		}
 	}
 
 	/**
@@ -51,7 +88,7 @@ public class SynchronizedQueue<T> {
 	 * @return queue capacity
 	 */
 	public int getCapacity() {
-
+		return this.capacity;
 	}
 
 	/**
@@ -59,9 +96,9 @@ public class SynchronizedQueue<T> {
 	 * @return queue size
 	 */
 	public int getSize() {
-
+		return this.size;
 	}
-	
+
 	/**
 	 * Registers a producer to this queue. This method actually increases the
 	 * internal producers counter of this queue by 1. This counter is used to
@@ -76,8 +113,10 @@ public class SynchronizedQueue<T> {
 	 * @see #unregisterProducer()
 	 */
 	public void registerProducer() {
-		// TODO: This should be in a critical section
-		this.producers++;
+		// This should be in a critical section
+		synchronized (this.lock) {
+			this.producers++;			
+		}
 	}
 
 	/**
@@ -87,7 +126,9 @@ public class SynchronizedQueue<T> {
 	 * @see #registerProducer()
 	 */
 	public void unregisterProducer() {
-		// TODO: This should be in a critical section
-		this.producers--;
+		// This should be in a critical section
+		synchronized (this.lock) {
+			this.producers--;			
+		}
 	}
 }
