@@ -4,4 +4,4 @@ This multithreaded search utility allow searching for files that contain some gi
 
 Our application consists of two queues and three groups of threads:
 
-![Utility scheme](Utility scheme.png)
+![Utility scheme](./Utility scheme.png)
