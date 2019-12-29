@@ -41,7 +41,7 @@ public class Scouter implements java.lang.Runnable {
 			return;
 		}
 		directoryQueue.enqueue(directory);
-		System.out.println("Added directory: "+directory.getName()+" to directory queue");
+		System.out.println("Scouter added directory: "+directory.getName()+" to directory queue");
 		File[] subDirectories = directory.listFiles();
 		for (File file : subDirectories) {
 			addDirectoriesToQueue(file);

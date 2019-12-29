@@ -54,8 +54,8 @@ public class SynchronizedQueue<T> {
 			T firstItem = buffer[first % capacity];
 			first++;
 			size--;
-			// notify waiting threads that space becomes available
-			lock.notify();
+			// notify waiting threads that some space becomes available
+			lock.notifyAll();
 			return firstItem;
 		}
 	}
@@ -79,7 +79,7 @@ public class SynchronizedQueue<T> {
 			size++;
 			last++;
 			// notify waiting threads some item is available
-			lock.notify();
+			lock.notifyAll();
 		}
 	}
 
@@ -96,7 +96,9 @@ public class SynchronizedQueue<T> {
 	 * @return queue size
 	 */
 	public int getSize() {
-		return this.size;
+		synchronized (lock) {
+			return this.size;						
+		}
 	}
 
 	/**
@@ -128,7 +130,8 @@ public class SynchronizedQueue<T> {
 	public void unregisterProducer() {
 		// This should be in a critical section
 		synchronized (this.lock) {
-			this.producers--;			
+			this.producers--;
+			lock.notifyAll();
 		}
 	}
 }

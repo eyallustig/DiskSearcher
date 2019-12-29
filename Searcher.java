@@ -32,17 +32,18 @@ public class Searcher implements java.lang.Runnable {
 	 */
 	public void run() {
 		resultsQueue.registerProducer();
-		while (directoryQueue.getSize() > 0) {
-			File directory = directoryQueue.dequeue();
+		File directory = directoryQueue.dequeue();
+		while (directory != null) {
 			File[] filesToEnqueue = directory.listFiles(new FilenameFilter() {
 				public boolean accept(File dir, String name) {
 					return name.contains(pattern);
 				}
 			});
 			for (File file : filesToEnqueue) {
-				System.out.println("Added "+file.getName()+" to the resultQueue");
+				System.out.println("Searcher added "+file.getName()+" to resultQueue");
 				resultsQueue.enqueue(file);
-			}			
+			}	
+			directory = directoryQueue.dequeue();
 		}
 		resultsQueue.unregisterProducer();
 	}
